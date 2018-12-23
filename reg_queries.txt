@@ -1,0 +1,3 @@
+select department.department_id, Instructor.first_name || Instructor.last_name as Professor
+from department, Instructor
+where Instructor.department_id = department.department_id;
