@@ -309,40 +309,50 @@ app.use("/edit_student", (req, res) => {
 });
 
 app.use("/edit_instructor", (req, res) => {
-  const query = `select * from instructor where instructor_id = ?`;
-  if (query) {
-    dbase.get(query, req.body.instructor_id, (err, row) => {
-      if (row) {
-        const deptQuery = `select * from department where description = ?`;
-        const update = `update instructor set first_name = ?, last_name = ?, dob = ?,
-        email = ?, phone = ?, position_type = ?, date_hired = ?, department_id = ?
-        where instructor_id = ?`;
-        if (deptQuery) {
-          dbase.get(deptQuery, req.body.description, (err, row2) => {
-            let dept = {
-              id: null
-            };
-            if (row2) {
-              dept.id = row2.department_id;
-            }
-            if (update) {
-              const instructor = [
-                req.body.firstName,
-                req.body.lastName,
-                req.body.dob,
-                req.body.email,
-                req.body.phone,
-                req.body.positionType,
-                req.body.dateHired,
-                dept.id,
-                row.instructor_id
-              ];
-              dbase.run(update, instructor);
-            }
-          });
+
+  if(req.body.instructor_id) {
+    const query = `select * from instructor where instructor_id = ?`;
+    if (query) {
+      dbase.get(query, req.body.instructor_id, (err, row) => {
+        if (row) {
+          const deptQuery = `select * from department where description = ?`;
+          const update = `update instructor set first_name = ?, last_name = ?, dob = ?,
+          email = ?, phone = ?, position_type = ?, date_hired = ?, department_id = ?
+          where instructor_id = ?`;
+          if (deptQuery) {
+            dbase.get(deptQuery, req.body.description, (err, row2) => {
+              let dept = {
+                id: null
+              };
+              if (row2) {
+                dept.id = row2.department_id;
+              }
+              if (update) {
+                const instructor = [
+                  req.body.firstName,
+                  req.body.lastName,
+                  req.body.dob,
+                  req.body.email,
+                  req.body.phone,
+                  req.body.positionType,
+                  req.body.dateHired,
+                  dept.id,
+                  row.instructor_id
+                ];
+                dbase.run(update, instructor);
+                dbase.all('select * from instructor', [], (err, rows) => {
+                  if(!err) {
+                    res.send(rows);
+                  }
+                });
+              }
+            });
+          }
         }
-      }
-    });
+      });
+    }
+  } else {
+    res.send('Instructor id must be provided')
   }
 });
 
