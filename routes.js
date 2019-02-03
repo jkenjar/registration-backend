@@ -1,80 +1,67 @@
-const db = require("sqlite3").verbose();
-let dbase = new db.Database("./registration.db");
-const express = require("express");
-const app = express();
-const parser = require("body-parser");
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
-app.use(parser.json());
-app.use(parser.urlencoded());
+const config = require('./config');
+config.setup.headers(config.setup.app, config.setup.parser);
 
-app.use("/majors", (req, res) => {
+config.setup.app.use("/majors", (req, res) => {
   const query = `select * from major`;
   if (query) {
-    dbase.all(query, [], (err, rows) => {
+    config.setup.dbase.all(query, [], (err, rows) => {
       res.send(rows);
     });
   }
 });
 
-app.use("/minors", (req, res) => {
+config.setup.app.use("/minors", (req, res) => {
   const query = `select * from minor`;
   if (query) {
-    dbase.all(query, [], (err, rows) => {
+    config.setup.dbase.all(query, [], (err, rows) => {
       res.send(rows);
     });
   }
 });
 
-app.use("/students", (req, res) => {
+config.setup.app.use("/students", (req, res) => {
   const query = `select * from student`;
   if (query) {
-    dbase.all(query, [], (err, rows) => {
+    config.setup.dbase.all(query, [], (err, rows) => {
       res.send(rows);
     });
   }
 });
 
-app.use("/instructors", (req, res) => {
+config.setup.app.use("/instructors", (req, res) => {
   const query = `select * from instructor`;
   if (query) {
-    dbase.all(query, [], (err, rows) => {
+    config.setup.dbase.all(query, [], (err, rows) => {
       res.send(rows);
     });
   }
 });
 
-app.use("/departments", (req, res) => {
+config.setup.app.use("/departments", (req, res) => {
   const query = `select * from department`;
   if (query) {
-    dbase.all(query, [], (err, rows) => {
+    config.setup.dbase.all(query, [], (err, rows) => {
       res.send(rows);
     });
   }
 });
 
-app.post("/add_major", (request, response) => {
+config.setup.app.post("/add_major", (request, response) => {
   const searchQuery =
     "select * from Major where Major.description = '" +
     request.body.description +
     "'";
-  dbase.all(searchQuery, [], (err, rows) => {
+  config.setup.dbase.all(searchQuery, [], (err, rows) => {
     if (rows == undefined || rows.length == 0) {
       const sql = `INSERT INTO
                  Major(description, type)
                VALUES (?, ?)`;
       const major = [request.body.description, request.body.type];
       if (sql && major !== undefined && major !== []) {
-        dbase.run(sql, major);
+        config.setup.dbase.run(sql, major);
         response.send(major);
       } else {
-        response.send("Adding major failed! Make sure no data is missing");
+        response.send("Adding major failed! Make sure no setup is missing");
       }
     } else {
       response.send("Major already exists");
@@ -82,7 +69,7 @@ app.post("/add_major", (request, response) => {
   });
 });
 
-app.use("/add_student", (req, res) => {
+config.setup.app.use("/add_student", (req, res) => {
   let degree = {
     major: null,
     minor: null
@@ -97,13 +84,13 @@ app.use("/add_student", (req, res) => {
     req.body.minorDescription +
     "'";
   if (majorQuery) {
-    dbase.all(majorQuery, [], (err, rows) => {
+    config.setup.dbase.all(majorQuery, [], (err, rows) => {
       if (rows[0]) {
         degree.major = rows[0].major_id;
       }
 
       if (minorQuery) {
-        dbase.all(minorQuery, [], (err, rows2) => {
+        config.setup.dbase.all(minorQuery, [], (err, rows2) => {
           if (rows2) {
             degree.minor = rows2[0].minor_id;
           }
@@ -125,10 +112,10 @@ app.use("/add_student", (req, res) => {
             degree.minor
           ];
           if (insertSQL && student !== undefined && student !== []) {
-            dbase.run(insertSQL, student);
+            config.setup.dbase.run(insertSQL, student);
             res.send(student);
           } else {
-            res.send("Adding student failed! Make sure no data is missing.");
+            res.send("Adding student failed! Make sure no setup is missing.");
           }
         });
       }
@@ -136,13 +123,13 @@ app.use("/add_student", (req, res) => {
   }
 });
 
-app.use("/add_instructor", (req, res) => {
+config.setup.app.use("/add_instructor", (req, res) => {
   const findInstructor =
     `select * from instructor where instructor_id = ` + req.body.instructor_id;
   if (findInstructor) {
-    dbase.all(findInstructor, [], (err, rows) => {
+    config.setup.dbase.all(findInstructor, [], (err, rows) => {
       if ((rows = [] || !rows[0] || err)) {
-        dbase.all(
+        config.setup.dbase.all(
           "select department_id from department where department.description ='" +
             req.body.description +
             "'",
@@ -165,15 +152,15 @@ app.use("/add_instructor", (req, res) => {
               department_id
             ];
             if (sql && instructor[0] !== "default") {
-              dbase.run(sql, instructor);
-              dbase.all('select * from instructor', [], (err, rows) => {
+              config.setup.dbase.run(sql, instructor);
+              config.setup.dbase.all('select * from instructor', [], (err, rows) => {
                 if(!err) {
                   res.send(rows);
                 }
               });
             } else {
               res.send(
-                "Adding instructor failed! Make sure no data is missing."
+                "Adding instructor failed! Make sure no setup is missing."
               );
             }
           }
@@ -183,26 +170,26 @@ app.use("/add_instructor", (req, res) => {
   }
 });
 
-app.use("/add_department", (req, res) => {
+config.setup.app.use("/add_department", (req, res) => {
   const deptQuery =
     "select * from department where department.description = '" +
     String(req.body.description).toLowerCase() +
     "'"; //check if department exists
-  dbase.all(deptQuery, [], (err, rows) => {
+  config.setup.dbase.all(deptQuery, [], (err, rows) => {
     if (rows == undefined || rows.length < 1) {
       const department = [req.body.description];
       const insertDept = `insert into department(description) values (?)`;
       if (department.length == 1 && insertDept) {
         const department = [req.body.description];
         const insertDept = `insert into department(description) values (?)`;
-        dbase.run(insertDept, department);
+        config.setup.dbase.run(insertDept, department);
         res.send(req.body.description + " was added.");
       } else {
         res.send(
-          "Cannot do an insert with an invalid query and/or missing data"
+          "Cannot do an insert with an invalid query and/or missing setup"
         );
       }
-      dbase.run(insertDept, department);
+      config.setup.dbase.run(insertDept, department);
       res.send(req.body.description + "was added.");
     } else {
       res.send(req.body.description + "already exits");
@@ -210,11 +197,11 @@ app.use("/add_department", (req, res) => {
   });
 });
 
-app.use("/edit_major", (req, res) => {
+config.setup.app.use("/edit_major", (req, res) => {
   const searchSQL = `select * from major where description = ? and type = ?`;
   const params = [req.body.description, req.body.type];
   if ((searchSQL && params !== undefined) || params.length == 0) {
-    dbase.get(searchSQL, params, (err, rows) => {
+    config.setup.dbase.get(searchSQL, params, (err, rows) => {
       if (rows) {
         const update = `update Major set description = ?, type = ? where description = ?`;
         const values = [
@@ -223,7 +210,7 @@ app.use("/edit_major", (req, res) => {
           String(req.body.description)
         ];
         if (update && values !== undefined && values.length > 0) {
-          dbase.run(update, values, err => {
+          config.setup.dbase.run(update, values, err => {
             if (err) {
               res.send(err);
             } else {
@@ -236,11 +223,11 @@ app.use("/edit_major", (req, res) => {
   }
 });
 
-app.use("/edit_minor", (request, response) => {
+config.setup.app.use("/edit_minor", (request, response) => {
   const searchSQL = `select * from minor where description = ?`;
   const params = [request.body.description];
   if ((searchSQL && params !== undefined) || params.length == 0) {
-    dbase.all(searchSQL, params, (err, rows) => {
+    config.setup.dbase.all(searchSQL, params, (err, rows) => {
       if (rows[0]) {
         const update = `update Minor set description = ? where description = ?`;
         const values = [
@@ -248,7 +235,7 @@ app.use("/edit_minor", (request, response) => {
           String(request.body.description)
         ];
         if (update && values !== undefined && values.length > 0) {
-          dbase.run(update, values, err => {
+          config.setup.dbase.run(update, values, err => {
             if (err) {
               response.send(err);
             } else {
@@ -261,9 +248,9 @@ app.use("/edit_minor", (request, response) => {
   }
 });
 
-app.use("/edit_student", (req, res) => {
+config.setup.app.use("/edit_student", (req, res) => {
   const query = `select * from STUDENT where student_id = ?`;
-  dbase.get(query, req.body.student_id, (err, record) => {
+  config.setup.dbase.get(query, req.body.student_id, (err, record) => {
     const update = `update STUDENT set first_name = ?, last_name = ?, dob = ?,
     grade = ?, date_started = ?, graduation_date = ?, email = ?, phone = ?,
     student_major_id = ?, student_minor_id = ? where student_id = ?`;
@@ -275,13 +262,13 @@ app.use("/edit_student", (req, res) => {
       const findMajor = "select * from major where description = ?";
       const findMinor = "select * from minor where description = ?";
       if (findMajor && req.body.major) {
-        dbase.get(findMajor, req.body.major, (err, row) => {
+        config.setup.dbase.get(findMajor, req.body.major, (err, row) => {
           if (!err && row) {
             degree.major = row.major_id;
           }
 
           if (findMinor && req.body.minor) {
-            dbase.get(findMinor, req.body.minor, (err, row) => {
+            config.setup.dbase.get(findMinor, req.body.minor, (err, row) => {
               if (!err && row) {
                 degree.minor = row.minor_id;
               }
@@ -299,7 +286,7 @@ app.use("/edit_student", (req, res) => {
                 degree.minor,
                 req.body.student_id
               ];
-              dbase.run(update, params);
+              config.setup.dbase.run(update, params);
             });
           }
         });
@@ -308,19 +295,19 @@ app.use("/edit_student", (req, res) => {
   });
 });
 
-app.use("/edit_instructor", (req, res) => {
+config.setup.app.use("/edit_instructor", (req, res) => {
 
   if(req.body.instructor_id) {
     const query = `select * from instructor where instructor_id = ?`;
     if (query) {
-      dbase.get(query, req.body.instructor_id, (err, row) => {
+      config.setup.dbase.get(query, req.body.instructor_id, (err, row) => {
         if (row) {
           const deptQuery = `select * from department where description = ?`;
           const update = `update instructor set first_name = ?, last_name = ?, dob = ?,
           email = ?, phone = ?, position_type = ?, date_hired = ?, department_id = ?
           where instructor_id = ?`;
           if (deptQuery) {
-            dbase.get(deptQuery, req.body.description, (err, row2) => {
+            config.setup.dbase.get(deptQuery, req.body.description, (err, row2) => {
               let dept = {
                 id: null
               };
@@ -339,8 +326,8 @@ app.use("/edit_instructor", (req, res) => {
                   dept.id,
                   row.instructor_id
                 ];
-                dbase.run(update, instructor);
-                dbase.all('select * from instructor', [], (err, rows) => {
+                config.setup.dbase.run(update, instructor);
+                config.setup.dbase.all('select * from instructor', [], (err, rows) => {
                   if(!err) {
                     res.send(rows);
                   }
@@ -356,17 +343,17 @@ app.use("/edit_instructor", (req, res) => {
   }
 });
 
-app.use("/edit_department", (req, res) => {
+config.setup.app.use("/edit_department", (req, res) => {
   const query =
     `select * from department where description = '` +
     req.body.description +
     "'";
   if (query) {
-    dbase.get(query, [], (err, row) => {
+    config.setup.dbase.get(query, [], (err, row) => {
       if (row) {
         const update = `update department set description = ? where description = ?`;
         if (update) {
-          dbase.run(update, [req.body.newDescription, req.body.description]);
+          config.setup.dbase.run(update, [req.body.newDescription, req.body.description]);
         }
       } else {
         res.send("Department not found...");
@@ -377,14 +364,14 @@ app.use("/edit_department", (req, res) => {
   }
 });
 
-app.use("/delete_major", (request, response) => {
+config.setup.app.use("/delete_major", (request, response) => {
   const query = `select * from major where description = ?`;
   if (query && request.body.description) {
-    dbase.get(query, request.body.description, (err, row) => {
+    config.setup.dbase.get(query, request.body.description, (err, row) => {
       if (row) {
         const del = `delete from major where description = ?`;
         if (del && request.body.description) {
-          dbase.run(del, [request.body.description]);
+          config.setup.dbase.run(del, [request.body.description]);
           row.message = "Major has been deleted.";
           res.send(row);
         }
@@ -397,14 +384,14 @@ app.use("/delete_major", (request, response) => {
   }
 });
 
-app.use("/delete_minor", (request, response) => {
+config.setup.app.use("/delete_minor", (request, response) => {
   const query = `select * from minor where description =  ?`;
   if (query && request.body.description) {
-    dbase.get(query, request.body.description, (err, row) => {
+    config.setup.dbase.get(query, request.body.description, (err, row) => {
       if (row) {
         const del = `delete from minor where description = ?`;
         if (del && request.body.description) {
-          dbase.run(del, [request.body.description]);
+          config.setup.dbase.run(del, [request.body.description]);
           row.message = "Minor has been deleted.";
           res.send(row);
         }
@@ -417,14 +404,14 @@ app.use("/delete_minor", (request, response) => {
   }
 });
 
-app.use("/delete_department", (request, body) => {
+config.setup.app.use("/delete_department", (request, body) => {
   const query = `select * from department where description =  ?`;
   if (query && request.body.description) {
-    dbase.get(query, request.body.description, (err, row) => {
+    config.setup.dbase.get(query, request.body.description, (err, row) => {
       if (row) {
         const del = `delete from department where description = ?`;
         if (del && request.body.description) {
-          dbase.run(del, [request.body.description]);
+          config.setup.dbase.run(del, [request.body.description]);
           row.message = "Department has been deleted.";
           res.send(row);
         }
@@ -437,14 +424,14 @@ app.use("/delete_department", (request, body) => {
   }
 });
 
-app.use("/delete_student", (req, res) => {
+config.setup.app.use("/delete_student", (req, res) => {
   const query = `select * from student where student_id =  ?`;
   if (query && req.body.student_id) {
-    dbase.get(query, req.body.student_id, (err, row) => {
+    config.setup.dbase.get(query, req.body.student_id, (err, row) => {
       if (row) {
         const del = `delete from student where student_id = ?`;
         if (del && req.body.student_id) {
-          dbase.run(del, [req.body.student_id]);
+          config.setup.dbase.run(del, [req.body.student_id]);
           row.message = "Student has been deleted.";
           res.send(row);
         }
@@ -457,14 +444,14 @@ app.use("/delete_student", (req, res) => {
   }
 });
 
-app.use("/delete_instructor", (req, res) => {
+config.setup.app.use("/delete_instructor", (req, res) => {
   const query = `select * from instructor where instructor_id =  ?`;
   if (query && req.body.instructor_id) {
-    dbase.get(query, req.body.instructor_id, (err, row) => {
+    config.setup.dbase.get(query, req.body.instructor_id, (err, row) => {
       if (row) {
         const del = `delete from instructor where instructor_id = ?`;
         if (del && req.body.instructor_id) {
-          dbase.run(del, [req.body.instructor_id]);
+          config.setup.dbase.run(del, [req.body.instructor_id]);
           row.message = "Instructor has been deleted.";
           res.send(row);
         }
@@ -477,4 +464,4 @@ app.use("/delete_instructor", (req, res) => {
   }
 });
 
-app.listen(3000);
+config.setup.app.listen(3000);
