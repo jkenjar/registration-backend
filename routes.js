@@ -444,14 +444,14 @@ config.setup.app.use("/delete_student", (req, res) => {
   }
 });
 
-config.setup.app.use("/delete_instructor", (req, res) => {
+config.setup.app.use("/delete_instructor/:id", (req, res) => {
   const query = `select * from instructor where instructor_id =  ?`;
-  if (query && req.body.instructor_id) {
-    config.setup.dbase.get(query, req.body.instructor_id, (err, row) => {
+  if (query && req.params.id) {
+    config.setup.dbase.get(query, req.params.id, (err, row) => {
       if (row) {
         const del = `delete from instructor where instructor_id = ?`;
-        if (del && req.body.instructor_id) {
-          config.setup.dbase.run(del, [req.body.instructor_id]);
+        if (del && req.params.id) {
+          config.setup.dbase.run(del, [req.params.id]);
           row.message = "Instructor has been deleted.";
           res.send(row);
         }
@@ -464,4 +464,4 @@ config.setup.app.use("/delete_instructor", (req, res) => {
   }
 });
 
-config.setup.app.listen(3000);
+config.setup.app.listen(8080);
