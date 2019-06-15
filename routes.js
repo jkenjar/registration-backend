@@ -1,13 +1,7 @@
 const config = require('./config');
 config.setup.headers(config.setup.app, config.setup.parser);
 
-config.setup.app.use('*',(req, res) => {
-  res.send(JSON.stringify({
-   message: "Welcome to Kenjar University API"
-  }));
-});
-
-config.setup.app.use("/majors", (req, res) => {
+config.setup.app.use("/api/majors", (req, res) => {
   const query = `select * from major`;
   if (query) {
     config.setup.dbase.all(query, [], (err, rows) => {
@@ -16,7 +10,7 @@ config.setup.app.use("/majors", (req, res) => {
   }
 });
 
-config.setup.app.use("/minors", (req, res) => {
+config.setup.app.use("/api/minors", (req, res) => {
   const query = `select * from minor`;
   if (query) {
     config.setup.dbase.all(query, [], (err, rows) => {
@@ -25,7 +19,7 @@ config.setup.app.use("/minors", (req, res) => {
   }
 });
 
-config.setup.app.use("/students", (req, res) => {
+config.setup.app.use("/api/students", (req, res) => {
   const query = `select * from student`;
   if (query) {
     config.setup.dbase.all(query, [], (err, rows) => {
@@ -34,7 +28,7 @@ config.setup.app.use("/students", (req, res) => {
   }
 });
 
-config.setup.app.use("/instructors", (req, res) => {
+config.setup.app.use("/api/instructors", (req, res) => {
   const query = `select * from instructor`;
   if (query) {
     config.setup.dbase.all(query, [], (err, rows) => {
@@ -43,7 +37,7 @@ config.setup.app.use("/instructors", (req, res) => {
   }
 });
 
-config.setup.app.use("/departments", (req, res) => {
+config.setup.app.use("/api/departments", (req, res) => {
   const query = `select * from department`;
   if (query) {
     config.setup.dbase.all(query, [], (err, rows) => {
@@ -52,7 +46,7 @@ config.setup.app.use("/departments", (req, res) => {
   }
 });
 
-config.setup.app.post("/add_major", (request, response) => {
+config.setup.app.post("/api/add_major", (request, response) => {
   const searchQuery =
     "select * from Major where Major.description = '" +
     request.body.description +
@@ -75,7 +69,7 @@ config.setup.app.post("/add_major", (request, response) => {
   });
 });
 
-config.setup.app.use("/add_student", (req, res) => {
+config.setup.app.use("/api/add_student", (req, res) => {
   let degree = {
     major: null,
     minor: null
@@ -129,7 +123,7 @@ config.setup.app.use("/add_student", (req, res) => {
   }
 });
 
-config.setup.app.use("/add_instructor", (req, res) => {
+config.setup.app.use("/api/add_instructor", (req, res) => {
   const findInstructor =
     `select * from instructor where instructor_id = ` + req.body.instructor_id;
   if (findInstructor) {
@@ -176,7 +170,7 @@ config.setup.app.use("/add_instructor", (req, res) => {
   }
 });
 
-config.setup.app.use("/add_department", (req, res) => {
+config.setup.app.use("/api/add_department", (req, res) => {
   const deptQuery =
     "select * from department where department.description = '" +
     String(req.body.description).toLowerCase() +
@@ -203,7 +197,7 @@ config.setup.app.use("/add_department", (req, res) => {
   });
 });
 
-config.setup.app.use("/edit_major", (req, res) => {
+config.setup.app.use("/api/edit_major", (req, res) => {
   const searchSQL = `select * from major where description = ? and type = ?`;
   const params = [req.body.description, req.body.type];
   if ((searchSQL && params !== undefined) || params.length == 0) {
@@ -229,7 +223,7 @@ config.setup.app.use("/edit_major", (req, res) => {
   }
 });
 
-config.setup.app.use("/edit_minor", (request, response) => {
+config.setup.app.use("/api/edit_minor", (request, response) => {
   const searchSQL = `select * from minor where description = ?`;
   const params = [request.body.description];
   if ((searchSQL && params !== undefined) || params.length == 0) {
@@ -254,7 +248,7 @@ config.setup.app.use("/edit_minor", (request, response) => {
   }
 });
 
-config.setup.app.use("/edit_student", (req, res) => {
+config.setup.app.use("/api/edit_student", (req, res) => {
   const query = `select * from STUDENT where student_id = ?`;
   config.setup.dbase.get(query, req.body.student_id, (err, record) => {
     const update = `update STUDENT set first_name = ?, last_name = ?, dob = ?,
@@ -301,7 +295,7 @@ config.setup.app.use("/edit_student", (req, res) => {
   });
 });
 
-config.setup.app.use("/edit_instructor", (req, res) => {
+config.setup.app.use("/api/edit_instructor", (req, res) => {
 
   if(req.body.instructor_id) {
     const query = `select * from instructor where instructor_id = ?`;
@@ -349,7 +343,7 @@ config.setup.app.use("/edit_instructor", (req, res) => {
   }
 });
 
-config.setup.app.use("/edit_department", (req, res) => {
+config.setup.app.use("/api/edit_department", (req, res) => {
   const query =
     `select * from department where description = '` +
     req.body.description +
@@ -370,7 +364,7 @@ config.setup.app.use("/edit_department", (req, res) => {
   }
 });
 
-config.setup.app.use("/delete_major", (request, response) => {
+config.setup.app.use("/api/delete_major", (request, response) => {
   const query = `select * from major where description = ?`;
   if (query && request.body.description) {
     config.setup.dbase.get(query, request.body.description, (err, row) => {
@@ -390,7 +384,7 @@ config.setup.app.use("/delete_major", (request, response) => {
   }
 });
 
-config.setup.app.use("/delete_minor", (request, response) => {
+config.setup.app.use("/api/delete_minor", (request, response) => {
   const query = `select * from minor where description =  ?`;
   if (query && request.body.description) {
     config.setup.dbase.get(query, request.body.description, (err, row) => {
@@ -410,7 +404,7 @@ config.setup.app.use("/delete_minor", (request, response) => {
   }
 });
 
-config.setup.app.use("/delete_department", (request, body) => {
+config.setup.app.use("/api/delete_department", (request, body) => {
   const query = `select * from department where description =  ?`;
   if (query && request.body.description) {
     config.setup.dbase.get(query, request.body.description, (err, row) => {
@@ -430,7 +424,7 @@ config.setup.app.use("/delete_department", (request, body) => {
   }
 });
 
-config.setup.app.use("/delete_student", (req, res) => {
+config.setup.app.use("/api/delete_student", (req, res) => {
   const query = `select * from student where student_id =  ?`;
   if (query && req.body.student_id) {
     config.setup.dbase.get(query, req.body.student_id, (err, row) => {
@@ -450,7 +444,7 @@ config.setup.app.use("/delete_student", (req, res) => {
   }
 });
 
-config.setup.app.use("/delete_instructor/:id", (req, res) => {
+config.setup.app.use("/api/delete_instructor/:id", (req, res) => {
   const query = `select * from instructor where instructor_id =  ?`;
   if (query && req.params.id) {
     config.setup.dbase.get(query, req.params.id, (err, row) => {
