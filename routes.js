@@ -1,6 +1,12 @@
 const config = require('./config');
 config.setup.headers(config.setup.app, config.setup.parser);
 
+config.setup.app.use('*',(req, res) => {
+  res.send(JSON.stringify({
+   message: "Welcome to Kenjar University API"
+  }));
+});
+
 config.setup.app.use("/majors", (req, res) => {
   const query = `select * from major`;
   if (query) {
@@ -464,4 +470,4 @@ config.setup.app.use("/delete_instructor/:id", (req, res) => {
   }
 });
 
-config.setup.app.listen(8080);
+config.setup.app.listen(80);
